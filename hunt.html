@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safety Golden Rules Treasure Hunt</title>
+<style>
+  *{box-sizing:border-box}
+  body{font-family:Arial,"Segoe UI",Tahoma,sans-serif;margin:0;background:#f3f4f6;color:#111827}
+  body.rtl{direction:rtl}
+  .wrap{max-width:1100px;margin:20px auto;padding:16px}
+  .card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 4px 18px rgba(0,0,0,.08)}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+  h1{margin:0 0 6px;font-size:25px}.sub{color:#4b5563;margin-bottom:16px;line-height:1.45}
+  body.rtl .sub,body.rtl .hint,body.rtl .scoreGuide{text-align:right}
+  button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:700;min-height:44px}
+  .langBtn{background:#dbeafe;color:#1e3a8a;white-space:nowrap}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .secondary{background:#e5e7eb}.danger{background:#fee2e2;color:#991b1b}
+  .fileBtn{background:#e5e7eb;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:700;display:inline-flex;align-items:center;min-height:44px}
+  .dropSource{display:flex;align-items:center;gap:9px;background:#111827;color:#fff;border-radius:10px;padding:10px 14px;min-height:44px;cursor:grab;font-weight:800;touch-action:none;user-select:none;box-shadow:0 2px 7px rgba(0,0,0,.16)}
+  .dropSource:active{cursor:grabbing}.dragIcon{font-size:20px;line-height:1}
+  .guide{background:#f8fafc;border:1px solid #dbeafe;border-radius:12px;padding:14px;margin-bottom:16px}
+  .guideTitle{font-size:17px;font-weight:800;margin-bottom:10px}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .step{display:flex;gap:9px;align-items:flex-start;background:#fff;border-radius:9px;padding:10px;border:1px solid #e5e7eb}
+  .step>span{display:flex;flex:none;width:27px;height:27px;border-radius:50%;align-items:center;justify-content:center;background:#111827;color:#fff;font-weight:800}
+  .step b{display:block;font-size:13px}.step small{display:block;color:#6b7280;margin-top:3px;line-height:1.35}
+  .scoreGuide{margin-top:10px;font-size:12px;color:#374151}
+  .rulesRef{margin-top:12px;padding:12px;background:#fff;border:1px solid #e5e7eb;border-radius:10px}
+  .rulesRefTitle{font-weight:800;font-size:13px;margin-bottom:8px}.rulesGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+  .ruleChip{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px;font-size:12px;font-weight:700;color:#1e3a8a}
+  .canvasWrap{position:relative;display:inline-block;max-width:100%;overflow:hidden;border-radius:10px;border:2px dashed #9ca3af;background:#111;transition:.15s}
+  .canvasWrap.dropReady{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.14)}
+  #photo{display:block;max-width:100%;height:auto}
+  .marker{position:absolute;width:30px;height:30px;border-radius:50%;background:#dc2626;color:#fff;border:2px solid #fff;display:flex;align-items:center;justify-content:center;font-weight:800;transform:translate(-50%,-50%);box-shadow:0 2px 8px rgba(0,0,0,.35);cursor:grab;user-select:none;touch-action:none;z-index:2}
+  .marker:active{cursor:grabbing}
+  .dropGhost{position:fixed;z-index:1000;pointer-events:none;width:54px;height:54px;border-radius:50%;background:rgba(220,38,38,.9);border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;transform:translate(-50%,-50%)}
+  .dropMessage{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(17,24,39,.82);color:#fff;padding:10px 14px;border-radius:10px;font-weight:800;pointer-events:none;display:none;z-index:3;white-space:nowrap}
+  .canvasWrap.dropReady .dropMessage{display:block}
+  .panel{margin-top:16px;display:grid;gap:12px}.row{border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fff}
+  .rowHeader{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.row h3{margin:0;font-size:15px}
+  .removeObs{min-height:36px;padding:7px 10px;background:#fee2e2;color:#991b1b}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  label{font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:4px}
+  input,textarea,select{width:100%;border:1px solid #d1d5db;border-radius:7px;padding:8px;font:inherit;background:#fff}
+  textarea{min-height:60px;resize:vertical}
+  .hint{font-size:12px;color:#6b7280;margin-top:8px}
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.72);display:flex;align-items:center;justify-content:center;padding:20px;z-index:2000}
+  .modalCard{background:#fff;border-radius:18px;max-width:520px;width:100%;padding:28px;text-align:center;box-shadow:0 15px 50px rgba(0,0,0,.3)}
+  .modalCard h2{margin:0 0 8px;font-size:25px}.modalCard p{color:#6b7280;margin:0 0 22px;line-height:1.5}
+  .langChoices{display:grid;grid-template-columns:1fr 1fr;gap:12px}.langChoice{font-size:18px;padding:16px;background:#eff6ff;color:#1e3a8a;border:2px solid #bfdbfe}.langChoice:hover{background:#dbeafe}
+  .hidden{display:none!important}
+  body.rtl .topbar{flex-direction:row-reverse}.rtl .rowHeader{flex-direction:row-reverse}.rtl .grid{direction:rtl}.rtl input,.rtl textarea,.rtl select{text-align:right}
+  .draggingSource{opacity:.65;transform:scale(1.03)}
+  @media(max-width:700px){.grid{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.rulesGrid{grid-template-columns:1fr 1fr}.guide{position:sticky;top:0;z-index:5}.canvasWrap{width:100%}.canvasWrap img{width:100%}.langChoices{grid-template-columns:1fr}.topbar{align-items:center}}
+  @media(max-width:430px){.rulesGrid{grid-template-columns:1fr}.toolbar{display:grid;grid-template-columns:1fr}.toolbar>*{width:100%;justify-content:center}}
+</style>
+<script src="config.js"></script><script src="challenges.js"></script><script src="common.js"></script>
+</head>
+<body>
+<div class="modal" id="languageModal" role="dialog" aria-modal="true" aria-labelledby="languageTitle">
+  <div class="modalCard">
+    <h2 id="languageTitle">Select Language / اختر اللغة</h2>
+    <p>Choose the language for the safety game.</p>
+    <div class="langChoices">
+      <button class="langChoice" id="englishBtn">English</button>
+      <button class="langChoice" id="arabicBtn">العربية</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal hidden" id="regModal"><div class="modalCard" style="text-align:start"><h2 data-i18n="reg">Register</h2>
+<label data-i18n="nm">Name</label><input id="rName"><br><br><label data-i18n="eid">Employee ID</label><input id="rEid"><br><br>
+<label data-i18n="dp">Department</label><select id="rDept"></select><br><br><button id="rGo" style="background:#2563eb;color:#fff;width:100%" data-i18n="start">Start</button></div></div>
+<div class="modal hidden" id="resModal"><div class="modalCard" style="text-align:start;max-height:90vh;overflow:auto"><h2 id="resTitle"></h2><div id="resBody"></div><p id="resSave" class="hint"></p><a class="btn" href="dashboard.html" data-i18n="board">Leaderboard</a> <a class="btn" href="index.html" data-i18n="back">Games</a></div></div>
+<div class="wrap">
+  <div class="card">
+    <div class="topbar">
+      <div>
+        <h1 data-i18n="title">Safety Golden Rules Treasure Hunt</h1>
+        <div class="sub" data-i18n="subtitle">Find the hidden safety hazards in the photo and mark them directly on the same image.</div>
+      </div>
+      <button class="langBtn" id="changeLanguage">🌐 <span data-i18n="language">Language</span></button>
+    </div>
+
+    <div class="guide">
+      <div class="guideTitle" data-i18n="howTo">📱 How to play</div>
+      <div class="steps">
+        <div class="step"><span>1</span><div><b data-i18n="step1Title">Drag the marker</b><small data-i18n="step1Text">Drag the observation marker onto the photo.</small></div></div>
+        <div class="step"><span>2</span><div><b data-i18n="step2Title">Drop on the hazard</b><small data-i18n="step2Text">Release it exactly where you see a hazard or unsafe act. An observation is created automatically.</small></div></div>
+        <div class="step"><span>3</span><div><b data-i18n="step3Title">Describe the finding</b><small data-i18n="step3Text">Enter the hazard, possible risk, violated Golden Rule, and corrective action.</small></div></div>
+      </div>
+      <div class="scoreGuide"><b data-i18n="scoringLabel">Scoring:</b> <span data-i18n="scoring">1 point for identifying the hazard + 1 bonus point for the correct corrective action.</span></div>
+      <div class="rulesRef">
+        <div class="rulesRefTitle" data-i18n="rulesReference">Golden Rules in this facility</div>
+        <div class="rulesGrid" id="rulesGrid"></div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <a class="fileBtn" href="index.html" style="text-decoration:none;color:inherit">⬅ <span data-i18n="back">Games</span></a>
+      <div class="dropSource" id="dragSource" tabindex="0" role="button" aria-label="Drag observation marker">
+        <span class="dragIcon">✚</span><span data-i18n="dragMarker">Drag observation marker</span>
+      </div>
+      <button id="submitBtn" style="background:#16a34a;color:#fff" data-i18n="submit">Submit</button>
+      <button class="secondary" id="export" data-i18n="export">Export annotated image</button>
+      <button class="danger" id="clear" data-i18n="clear">Clear all</button>
+    </div>
+
+    <div class="canvasWrap" id="canvasWrap">
+      <img id="photo" alt="Safety Golden Rules Treasure Hunt challenge photo" src="challenge1.jpg">
+      <div class="dropMessage" id="dropMessage" data-i18n="dropHere">Drop marker here</div>
+    </div>
+
+    <div class="hint"><span data-i18n="tipLabel">Tip:</span> <b data-i18n="tip">Drag the observation marker onto the photo. You can also drag an existing numbered marker to reposition it.</b></div>
+    <div class="panel" id="panel"></div>
+  </div>
+</div>
+
+<script>
+const file = document.getElementById('file');
+const photo = document.getElementById('photo');
+const wrap = document.getElementById('canvasWrap');
+const panel = document.getElementById('panel');
+const markers = [];
+const dragSource = document.getElementById('dragSource');
+const dropMessage = document.getElementById('dropMessage');
+const languageModal = document.getElementById('languageModal');
+let currentLang = 'en';
+let pointerDrag = null;
+
+const rules = [
+  {en:'Risk Assessment', ar:'تقييم المخاطر'},
+  {en:'Machine Safety', ar:'سلامة الآلات'},
+  {en:'Energy Isolation', ar:'عزل الطاقة'},
+  {en:'Industrial Vehicles', ar:'المركبات الصناعية'},
+  {en:'Ergonomics', ar:'الهندسة البشرية'},
+  {en:'Personal Protective Equipment', ar:'معدات الوقاية الشخصية'},
+  {en:'Lifting Operation', ar:'عمليات الرفع'},
+  {en:'Competency', ar:'الكفاءة'},
+  {en:'Hazardous Materials', ar:'المواد الخطرة'}
+];
+
+const t = {
+  en:{
+    title:'Safety Golden Rules Treasure Hunt', subtitle:'Find the hidden safety hazards in the photo and mark them directly on the same image.', language:'Language', howTo:'📱 How to play',
+    step1Title:'Drag the marker', step1Text:'Drag the observation marker onto the photo.',
+    step2Title:'Drop on the hazard', step2Text:'Release it exactly where you see a hazard or unsafe act. An observation is created automatically.',
+    step3Title:'Describe the finding', step3Text:'Enter the hazard, possible risk, violated Golden Rule, and corrective action.',
+    scoringLabel:'Scoring:', scoring:'1 point for identifying the hazard + 1 bonus point for the correct corrective action.', rulesReference:'Golden Rules in this facility',
+    replacePhoto:'Replace photo', dragMarker:'Drag observation marker', export:'Export annotated image', clear:'Clear all', dropHere:'Drop marker here',
+    tipLabel:'Tip:', tip:'Drag the observation marker onto the photo. You can also drag an existing numbered marker to reposition it.',
+    observation:'Observation', hazard:'Hazard / unsafe act', risk:'Risk / possible consequence', rule:'Golden Rule violated', action:'Corrective action', selectRule:'Select rule',
+    hazardPh:'e.g. missing helmet', riskPh:'e.g. head injury', actionPh:'What should be done?', remove:'Remove', confirmClear:'Clear all observations?', uploadFirst:'Please upload or use the challenge photo first.',
+    dragDrop:'Drop the marker on the photo.'
+  },
+  ar:{
+    title:'لعبة البحث عن قواعد السلامة الذهبية', subtitle:'ابحث عن مخاطر السلامة المخفية في الصورة وحددها مباشرة على الصورة نفسها.', language:'اللغة', howTo:'📱 طريقة اللعب',
+    step1Title:'اسحب العلامة', step1Text:'اسحب علامة الملاحظة إلى الصورة.',
+    step2Title:'أسقطها على الخطر', step2Text:'اتركها بالضبط في مكان الخطر أو التصرف غير الآمن. سيتم إنشاء الملاحظة تلقائياً.',
+    step3Title:'صف الملاحظة', step3Text:'أدخل الخطر، والنتيجة المحتملة، وقاعدة السلامة الذهبية المخالفة، والإجراء التصحيحي.',
+    scoringLabel:'التقييم:', scoring:'نقطة واحدة لتحديد الخطر + نقطة إضافية للإجراء التصحيحي الصحيح.', rulesReference:'قواعد السلامة الذهبية في المنشأة',
+    replacePhoto:'استبدال الصورة', dragMarker:'اسحب علامة الملاحظة', export:'تصدير الصورة مع العلامات', clear:'مسح الكل', dropHere:'أسقط العلامة هنا',
+    tipLabel:'نصيحة:', tip:'اسحب علامة الملاحظة إلى الصورة. ويمكنك أيضاً سحب أي علامة مرقمة موجودة لإعادة تحديد مكانها.',
+    observation:'الملاحظة', hazard:'الخطر / التصرف غير الآمن', risk:'المخاطر / النتيجة المحتملة', rule:'قاعدة السلامة الذهبية المخالفة', action:'الإجراء التصحيحي', selectRule:'اختر القاعدة',
+    hazardPh:'مثال: عدم ارتداء الخوذة', riskPh:'مثال: إصابة بالرأس', actionPh:'ما الذي يجب عمله؟', remove:'حذف', confirmClear:'هل تريد مسح جميع الملاحظات؟', uploadFirst:'يرجى استخدام صورة التحدي أو رفع صورة أولاً.',
+    dragDrop:'أسقط العلامة على الصورة.'
+  }
+};
+
+function setLanguage(lang, closeModal=true){
+  currentLang=lang;
+  document.documentElement.lang=lang==='ar'?'ar':'en';
+  document.body.classList.toggle('rtl',lang==='ar');
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const key=el.getAttribute('data-i18n');
+    if(t[lang][key]!==undefined) el.textContent=t[lang][key];
+  });
+  renderRules();
+  document.querySelectorAll('.obs-rule').forEach(select=>{
+    const val=select.value;
+    select.innerHTML=ruleOptions();
+    select.value=val;
+  });
+  if(closeModal) languageModal.classList.add('hidden');
+}
+function ruleOptions(){
+  return `<option value="">${t[currentLang].selectRule}</option>`+rules.map((r,i)=>`<option value="${i}">${r[currentLang]}</option>`).join('');
+}
+function renderRules(){
+  document.getElementById('rulesGrid').innerHTML=rules.map(r=>`<div class="ruleChip">${r[currentLang]}</div>`).join('');
+}
+
+function getPhotoPosition(clientX,clientY){
+  const rect=photo.getBoundingClientRect();
+  return {x:Math.max(0,Math.min(100,((clientX-rect.left)/rect.width)*100)), y:Math.max(0,Math.min(100,((clientY-rect.top)/rect.height)*100))};
+}
+function pointInsidePhoto(clientX,clientY){
+  const r=photo.getBoundingClientRect();
+  return clientX>=r.left && clientX<=r.right && clientY>=r.top && clientY<=r.bottom;
+}
+
+file.addEventListener('change',e=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>photo.src=r.result; r.readAsDataURL(f);
+});
+
+function createGhost(x,y){
+  const g=document.createElement('div'); g.className='dropGhost'; g.textContent='+'; g.style.left=x+'px'; g.style.top=y+'px'; document.body.appendChild(g); return g;
+}
+function beginPointerDrag(e){
+  if(e.button!==undefined && e.button!==0) return;
+  pointerDrag={id:e.pointerId,source:dragSource,ghost:createGhost(e.clientX,e.clientY)};
+  dragSource.classList.add('draggingSource'); wrap.classList.add('dropReady');
+  dragSource.setPointerCapture?.(e.pointerId); e.preventDefault();
+}
+function movePointerDrag(e){
+  if(!pointerDrag || e.pointerId!==pointerDrag.id) return;
+  pointerDrag.ghost.style.left=e.clientX+'px'; pointerDrag.ghost.style.top=e.clientY+'px';
+}
+function endPointerDrag(e){
+  if(!pointerDrag || e.pointerId!==pointerDrag.id) return;
+  const pos=pointInsidePhoto(e.clientX,e.clientY)?getPhotoPosition(e.clientX,e.clientY):null;
+  pointerDrag.ghost.remove(); pointerDrag=null; dragSource.classList.remove('draggingSource'); wrap.classList.remove('dropReady');
+  if(pos) addObservation(pos); else alert(t[currentLang].dragDrop);
+}
+dragSource.addEventListener('pointerdown',beginPointerDrag);
+dragSource.addEventListener('pointermove',movePointerDrag);
+dragSource.addEventListener('pointerup',endPointerDrag);
+dragSource.addEventListener('pointercancel',endPointerDrag);
+
+
+function makeMarkerDraggable(m){
+  m.addEventListener('pointerdown',e=>{
+    if(e.button!==undefined && e.button!==0) return;
+    const move=ev=>{if(ev.pointerId!==e.pointerId)return; const p=getPhotoPosition(ev.clientX,ev.clientY); if(pointInsidePhoto(ev.clientX,ev.clientY)){m.style.left=p.x+'%';m.style.top=p.y+'%';}};
+    const up=ev=>{if(ev.pointerId!==e.pointerId)return; window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);};
+    window.addEventListener('pointermove',move);window.addEventListener('pointerup',up); e.preventDefault();
+  });
+}
+
+function addObservation(pos){
+  const n=markers.length+1;
+  const m=document.createElement('div'); m.className='marker'; m.textContent=n; m.title=t[currentLang].tip; m.style.left=pos.x+'%'; m.style.top=pos.y+'%';
+  wrap.appendChild(m); makeMarkerDraggable(m);
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=`<div class="rowHeader"><h3>${t[currentLang].observation} ${n}</h3><button type="button" class="removeObs">${t[currentLang].remove}</button></div>
+    <div class="grid">
+      <div><label>${t[currentLang].hazard}</label><input data-key="hazard" placeholder="${t[currentLang].hazardPh}"></div>
+      <div><label>${t[currentLang].risk}</label><input data-key="risk" placeholder="${t[currentLang].riskPh}"></div>
+      <div><label>${t[currentLang].rule}</label><select class="obs-rule" data-key="rule">${ruleOptions()}</select></div>
+      <div><label>${t[currentLang].action}</label><input data-key="action" placeholder="${t[currentLang].actionPh}"></div>
+    </div>`;
+  panel.appendChild(row);
+  const item={el:m,row}; markers.push(item);
+  row.querySelector('.removeObs').onclick=()=>removeObservation(item);
+  window.scrollTo({top:Math.max(0,row.getBoundingClientRect().top+window.scrollY-120),behavior:'smooth'});
+}
+function removeObservation(item){
+  const idx=markers.indexOf(item); if(idx<0)return;
+  item.el.remove(); item.row.remove(); markers.splice(idx,1);
+  markers.forEach((x,i)=>{x.el.textContent=i+1; x.row.querySelector('h3').textContent=t[currentLang].observation+' '+(i+1);});
+}
+
+document.getElementById('clear').onclick=()=>{if(!markers.length)return;if(!confirm(t[currentLang].confirmClear))return;markers.splice(0).forEach(x=>x.el.remove());panel.innerHTML='';};
+
+document.getElementById('export').onclick=()=>{
+  if(!photo.src){alert(t[currentLang].uploadFirst);return;}
+  const scale=photo.naturalWidth/photo.clientWidth || 1;
+  const c=document.createElement('canvas'); c.width=photo.naturalWidth; c.height=photo.naturalHeight;
+  const ctx=c.getContext('2d'); ctx.drawImage(photo,0,0,c.width,c.height);
+  markers.forEach((x,i)=>{const left=parseFloat(x.el.style.left)/100*c.width;const top=parseFloat(x.el.style.top)/100*c.height;const r=Math.max(16,Math.round(14*scale));ctx.beginPath();ctx.arc(left,top,r,0,Math.PI*2);ctx.fillStyle='#dc2626';ctx.fill();ctx.lineWidth=2*scale;ctx.strokeStyle='#fff';ctx.stroke();ctx.fillStyle='#fff';ctx.font=`800 ${Math.round(15*scale)}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(String(i+1),left,top);});
+  const a=document.createElement('a'); a.download='safety-treasure-hunt-annotated.png'; a.href=c.toDataURL('image/png'); a.click();
+};
+
+document.getElementById('englishBtn').onclick=()=>setLanguage('en');
+document.getElementById('arabicBtn').onclick=()=>setLanguage('ar');
+document.getElementById('changeLanguage').onclick=()=>languageModal.classList.remove('hidden');
+
+
+Object.assign(t.en,{back:'Games',submit:'Submit answers',reg:'Register to play',nm:'Full name',eid:'Employee ID',dp:'Department',start:'Start',score:'Your score',found:'Found',missed:'Missed',actOk:'corrective action ✔',actNo:'corrective action ✘',board:'Leaderboard',fill:'Please fill all fields.',noMark:'Place at least one marker first.',sure:'Submit now? You cannot change answers afterwards.',ok:'Result saved ✔',offline:'Saved on this device only (server not connected).'});
+Object.assign(t.ar,{back:'الألعاب',submit:'إرسال الإجابات',reg:'سجّل للعب',nm:'الاسم الكامل',eid:'الرقم الوظيفي',dp:'القسم',start:'ابدأ',score:'نتيجتك',found:'تم اكتشافه',missed:'لم يتم اكتشافه',actOk:'الإجراء التصحيحي ✔',actNo:'الإجراء التصحيحي ✘',board:'لوحة المتصدرين',fill:'يرجى ملء جميع الحقول.',noMark:'ضع علامة واحدة على الأقل أولاً.',sure:'هل تريد الإرسال الآن؟ لا يمكن تعديل الإجابات بعد ذلك.',ok:'تم حفظ النتيجة ✔',offline:'تم الحفظ على هذا الجهاز فقط (الخادم غير متصل).'});
+let player=null,t0=Date.now(),done=false;
+const regModal=document.getElementById('regModal'),rDept=document.getElementById('rDept');
+function fillDepts(){const v=rDept.value;rDept.innerHTML=DEPTS.map((d,i)=>`<option value="${d[0]}">${d[currentLang==='ar'?1:0]}</option>`).join('');if(v)rDept.value=v}
+['englishBtn','arabicBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>{fillDepts();if(!player)regModal.classList.remove('hidden')}));
+document.getElementById('rGo').onclick=()=>{const n=rName.value.trim(),e=rEid.value.trim();if(!n||!e){alert(t[currentLang].fill);return}player={name:n,eid:e,dept:rDept.value};regModal.classList.add('hidden');t0=Date.now()};
+function scoreHunt(){const W=photo.clientWidth,H=photo.clientHeight,res=HUNT.hot.map(h=>({h,found:false,act:false}));
+ markers.forEach(mk=>{const mx=parseFloat(mk.el.style.left)/100*W,my=parseFloat(mk.el.style.top)/100*H;let best=null,bd=1e9;
+  res.forEach(r=>{if(r.found)return;const d=Math.hypot(mx-r.h.x/100*W,my-r.h.y/100*H);if(d<=r.h.r/100*W&&d<bd){bd=d;best=r}});
+  if(best){best.found=true;const a=mk.row.querySelector('[data-key="action"]').value.toLowerCase();best.act=best.h.k.some(w=>a.includes(w))}});return res}
+document.getElementById('submitBtn').onclick=async()=>{if(done)return;if(!player){regModal.classList.remove('hidden');return}
+ if(!markers.length){alert(t[currentLang].noMark);return}if(!confirm(t[currentLang].sure))return;done=true;
+ const res=scoreHunt(),L=currentLang,T=t[L],f=res.filter(r=>r.found).length,sc=f+res.filter(r=>r.act).length,mx=res.length*2;
+ resTitle.textContent=T.score+': '+sc+' / '+mx;
+ resBody.innerHTML='<table style="width:100%">'+res.map(r=>`<tr><td>${r.found?'✅':'❌'} ${r.h[L]}</td><td>${r.found?(r.act?T.actOk:T.actNo):T.missed}</td></tr>`).join('')+'</table>';
+ resModal.classList.remove('hidden');
+ const ok=await Store.save({ts:new Date().toISOString(),name:player.name,eid:player.eid,dept:player.dept,game:'hunt',score:sc,max:mx,found:f,total:res.length,lang:L,sec:Math.round((Date.now()-t0)/1000),det:res.filter(r=>r.found).map(r=>r.h.id).join('|')});
+ resSave.textContent=ok?T.ok:T.offline};
+if(location.search.includes('edit=1'))photo.addEventListener('click',e=>{const p=getPhotoPosition(e.clientX,e.clientY);alert('x:'+p.x.toFixed(1)+'  y:'+p.y.toFixed(1))});
+
+// Start with the language selector visible every time the file is opened.
+setLanguage('en',false); languageModal.classList.remove('hidden');
+</script>
+</body>
+</html>

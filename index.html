@@ -1,0 +1,11 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Safety Culture Games</title><link rel="stylesheet" href="style.css"></head><body>
+<header><div class="wrap"><h1 id="h">Safety Culture Games</h1><div><a class="btn" href="dashboard.html" id="db">📊 Dashboard</a> <button id="lg">العربية</button></div></div></header>
+<div class="wrap"><p class="sub" id="intro">Pick a game, register with your name and employee ID, and compete with your colleagues.</p><div class="grid" id="g"></div></div>
+<script src="config.js"></script><script src="common.js"></script><script>
+let L=localStorage.getItem('lang')||'en';
+function draw(){const ar=L==='ar';document.body.classList.toggle('rtl',ar);document.documentElement.lang=L;
+h.textContent=ar?'ألعاب ثقافة السلامة':'Safety Culture Games';db.textContent=ar?'📊 لوحة النتائج':'📊 Dashboard';lg.textContent=ar?'English':'العربية';
+intro.textContent=ar?'اختر لعبة، وسجّل باسمك ورقمك الوظيفي، وتنافس مع زملائك.':'Pick a game, register with your name and employee ID, and compete with your colleagues.';
+g.innerHTML=GAMES.map(x=>`<div class="card ${x.live?'':'off'}"><div class="ic">${x.icon}</div><h2>${x[L]}</h2><p class="sub">${x[ar?'da':'de']}</p>${x.live?`<a class="btn" href="${x.file}">${ar?'العب الآن':'Play'}</a>`:`<span class="tag">${ar?'قريباً':'Coming soon'}</span>`}</div>`).join('')}
+lg.onclick=()=>{L=L==='ar'?'en':'ar';localStorage.setItem('lang',L);draw()};draw();
+</script></body></html>

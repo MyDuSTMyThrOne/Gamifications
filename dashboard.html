@@ -1,0 +1,27 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Safety Dashboard</title><link rel="stylesheet" href="style.css"></head><body>
+<header><div class="wrap"><h1 id="h"></h1><div><a class="btn" href="index.html" id="bk"></a> <button id="lg"></button></div></div></header>
+<div class="wrap"><div class="grid" id="kp"></div><div class="card" style="margin-top:14px"><h2 id="t1"></h2><div class="podium" id="pd"></div><br><table id="lb"></table></div>
+<div class="grid"><div class="card"><h2 id="t2"></h2><table id="dp"></table></div><div class="card"><h2 id="t3"></h2><table id="hz"></table></div></div>
+<p><button id="csv"></button> <button id="adm"></button> <button id="rst" style="display:none;background:#fee2e2;color:#991b1b">Reset</button> <span class="sub" id="note"></span></p></div>
+<script src="config.js"></script><script src="challenges.js"></script><script src="common.js"></script><script>
+const D={en:{h:'Safety Dashboard',bk:'Games',p:'Participants',a:'Average score',tp:'Top score',t1:'🏆 Leaderboard',t2:'By department',t3:'Hazards most often missed',nm:'Name',dp:'Department',sc:'Score',tm:'Time (s)',n:'Players',csv:'Download CSV',demo:'Demo mode: showing results from this device only.',f:'found'},
+ar:{h:'لوحة نتائج السلامة',bk:'الألعاب',p:'المشاركون',a:'متوسط النتيجة',tp:'أعلى نتيجة',t1:'🏆 لوحة المتصدرين',t2:'حسب القسم',t3:'المخاطر الأكثر إغفالاً',nm:'الاسم',dp:'القسم',sc:'النتيجة',tm:'الوقت (ث)',n:'اللاعبون',csv:'تحميل CSV',demo:'وضع تجريبي: النتائج من هذا الجهاز فقط.',f:'تم اكتشافه'}};
+let L=localStorage.getItem('lang')||'en',rows=[];
+const pct=(a,b)=>b?Math.round(a/b*100):0,bar=(p,c)=>`<div class="bar ${c||''}"><i style="width:${p}%"></i></div>`,dn=d=>{const i=DEPTS.findIndex(x=>x[0]===d);return i<0?d:DEPTS[i][L==='ar'?1:0]};
+function draw(){const T=D[L];document.body.classList.toggle('rtl',L==='ar');document.documentElement.lang=L;
+ for(const k of['h','bk','t1','t2','t3'])document.getElementById(k).textContent=T[k];csv.textContent=T.csv;lg.textContent=L==='ar'?'English':'العربية';note.textContent=Store.online?'':T.demo;adm.textContent=sessionStorage.getItem('adm')?'🔓 Admin':'🔒 Admin';
+ const best={};rows.filter(r=>r.game==='hunt').forEach(r=>{const k=String(r.eid);const b=best[k];if(!b||r.score>b.score||(r.score==b.score&&r.sec<b.sec))best[k]=r});
+ const P=Object.values(best).sort((a,b)=>b.score-a.score||a.sec-b.sec),avg=pct(P.reduce((s,r)=>s+r.score,0),P.reduce((s,r)=>s+r.max,0));
+ kp.innerHTML=[[T.p,P.length],[T.a,avg+'%'],[T.tp,P.length?P[0].score+'/'+P[0].max:'-']].map(x=>`<div class="card"><div class="sub">${x[0]}</div><div class="kpi">${x[1]}</div></div>`).join('');
+ pd.innerHTML=P.slice(0,3).map((r,i)=>`<div><b>${['🥇','🥈','🥉'][i]}</b>${r.name}<br>${r.score}/${r.max}</div>`).join('');
+ lb.innerHTML=`<tr><th>#</th><th>${T.nm}</th><th>${T.dp}</th><th>${T.sc}</th><th>${T.tm}</th></tr>`+P.slice(0,15).map((r,i)=>`<tr><td>${i+1}</td><td>${r.name}</td><td>${dn(r.dept)}</td><td>${r.score}/${r.max}</td><td>${r.sec}</td></tr>`).join('');
+ const dd={};P.forEach(r=>{(dd[r.dept]=dd[r.dept]||[]).push(r)});
+ dp.innerHTML=`<tr><th>${T.dp}</th><th>${T.n}</th><th>${T.a}</th></tr>`+Object.entries(dd).map(([d,a])=>[d,a.length,pct(a.reduce((s,r)=>s+r.score,0),a.reduce((s,r)=>s+r.max,0))]).sort((x,y)=>y[2]-x[2]).map(x=>`<tr><td>${dn(x[0])}</td><td>${x[1]}</td><td>${x[2]}%${bar(x[2])}</td></tr>`).join('');
+ hz.innerHTML=HUNT.hot.map(h=>[h,pct(P.filter(r=>String(r.det).split('|').includes(h.id)).length,P.length)]).sort((a,b)=>a[1]-b[1]).map(x=>`<tr><td>${x[0][L]}</td><td>${x[1]}% ${T.f}${bar(x[1],'red')}</td></tr>`).join('')}
+lg.onclick=()=>{L=L==='ar'?'en':'ar';localStorage.setItem('lang',L);draw()};
+adm.onclick=async()=>{const p=prompt('Admin password / كلمة مرور المشرف');if(p){sessionStorage.setItem('adm',p);await load();rst.style.display=sessionStorage.getItem('adm')?'':'none'}};
+rst.onclick=async()=>{if(!confirm('Delete ALL results? / حذف كل النتائج؟'))return;await fetch('api/results',{method:'DELETE',headers:Store.hdr()});load()};
+csv.onclick=()=>{if(!sessionStorage.getItem('adm')){adm.click();return}const c=['ts','name','eid','dept','game','score','max','found','total','lang','sec','det'];const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ const u=URL.createObjectURL(new Blob(['\ufeff'+[c.join(',')].concat(rows.map(r=>c.map(k=>q(r[k])).join(','))).join('\n')],{type:'text/csv'}));const a=document.createElement('a');a.href=u;a.download='safety-results.csv';a.click()};
+async function load(){rows=await Store.load();draw()}load();setInterval(load,30000);
+</script></body></html>
