@@ -103,6 +103,7 @@
       <div class="dropSource" id="dragSource" tabindex="0" role="button" aria-label="Drag observation marker">
         <span class="dragIcon">✚</span><span data-i18n="dragMarker">Drag observation marker</span>
       </div>
+      <button id="guideBtn" data-i18n="howShort">How to play</button>
       <button id="submitBtn" style="background:#16a34a;color:#fff" data-i18n="submit">Submit</button>
       <button class="secondary" id="export" data-i18n="export">Export annotated image</button>
       <button class="danger" id="clear" data-i18n="clear">Clear all</button>
@@ -279,13 +280,14 @@ document.getElementById('arabicBtn').onclick=()=>setLanguage('ar');
 document.getElementById('changeLanguage').onclick=()=>languageModal.classList.remove('hidden');
 
 
-Object.assign(t.en,{back:'Games',submit:'Submit answers',reg:'Register to play',nm:'Full name',eid:'Employee ID',dp:'Department',start:'Start',score:'Your score',found:'Found',missed:'Missed',actOk:'corrective action ✔',actNo:'corrective action ✘',board:'Leaderboard',fill:'Please fill all fields.',noMark:'Place at least one marker first.',sure:'Submit now? You cannot change answers afterwards.',ok:'Result saved ✔',offline:'Saved on this device only (server not connected).'});
-Object.assign(t.ar,{back:'الألعاب',submit:'إرسال الإجابات',reg:'سجّل للعب',nm:'الاسم الكامل',eid:'الرقم الوظيفي',dp:'القسم',start:'ابدأ',score:'نتيجتك',found:'تم اكتشافه',missed:'لم يتم اكتشافه',actOk:'الإجراء التصحيحي ✔',actNo:'الإجراء التصحيحي ✘',board:'لوحة المتصدرين',fill:'يرجى ملء جميع الحقول.',noMark:'ضع علامة واحدة على الأقل أولاً.',sure:'هل تريد الإرسال الآن؟ لا يمكن تعديل الإجابات بعد ذلك.',ok:'تم حفظ النتيجة ✔',offline:'تم الحفظ على هذا الجهاز فقط (الخادم غير متصل).'});
+Object.assign(t.en,{howShort:'How to play',back:'Games',submit:'Submit answers',reg:'Register to play',nm:'Full name',eid:'Employee ID',dp:'Department',start:'Start',score:'Your score',found:'Found',missed:'Missed',actOk:'corrective action ✔',actNo:'corrective action ✘',board:'Leaderboard',fill:'Please fill all fields.',noMark:'Place at least one marker first.',sure:'Submit now? You cannot change answers afterwards.',ok:'Result saved ✔',offline:'Saved on this device only (server not connected).'});
+Object.assign(t.ar,{howShort:'طريقة اللعب',back:'الألعاب',submit:'إرسال الإجابات',reg:'سجّل للعب',nm:'الاسم الكامل',eid:'الرقم الوظيفي',dp:'القسم',start:'ابدأ',score:'نتيجتك',found:'تم اكتشافه',missed:'لم يتم اكتشافه',actOk:'الإجراء التصحيحي ✔',actNo:'الإجراء التصحيحي ✘',board:'لوحة المتصدرين',fill:'يرجى ملء جميع الحقول.',noMark:'ضع علامة واحدة على الأقل أولاً.',sure:'هل تريد الإرسال الآن؟ لا يمكن تعديل الإجابات بعد ذلك.',ok:'تم حفظ النتيجة ✔',offline:'تم الحفظ على هذا الجهاز فقط (الخادم غير متصل).'});
 let player=null,t0=Date.now(),done=false;
 const regModal=document.getElementById('regModal'),rDept=document.getElementById('rDept');
-function fillDepts(){const v=rDept.value;rDept.innerHTML=DEPTS.map((d,i)=>`<option value="${d[0]}">${d[currentLang==='ar'?1:0]}</option>`).join('');if(v)rDept.value=v}
+function fillDepts(){const v=rDept.value;rDept.innerHTML=(typeof DEPTS!=='undefined'?DEPTS:[['Other','أخرى']]).map((d,i)=>`<option value="${d[0]}">${d[currentLang==='ar'?1:0]}</option>`).join('');if(v)rDept.value=v}
 ['englishBtn','arabicBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>{fillDepts();if(!player)regModal.classList.remove('hidden')}));
-document.getElementById('rGo').onclick=()=>{const n=rName.value.trim(),e=rEid.value.trim();if(!n||!e){alert(t[currentLang].fill);return}player={name:n,eid:e,dept:rDept.value};regModal.classList.add('hidden');t0=Date.now()};
+document.getElementById('rGo').onclick=()=>{const n=rName.value.trim(),e=rEid.value.trim();if(!n||!e){alert(t[currentLang].fill);return}player={name:n,eid:e,dept:rDept.value};regModal.classList.add('hidden');t0=Date.now();const g=document.querySelector('.guide');g.style.display='none';const tb=document.querySelector('.toolbar');tb.scrollIntoView&&tb.scrollIntoView({behavior:'smooth',block:'start'})}
+document.getElementById('guideBtn').onclick=()=>{const g=document.querySelector('.guide');g.style.display=g.style.display==='none'?'':'none';if(g.style.display==='')g.scrollIntoView&&g.scrollIntoView({behavior:'smooth'})};;
 function scoreHunt(){const W=photo.clientWidth,H=photo.clientHeight,res=HUNT.hot.map(h=>({h,found:false,act:false}));
  markers.forEach(mk=>{const mx=parseFloat(mk.el.style.left)/100*W,my=parseFloat(mk.el.style.top)/100*H;let best=null,bd=1e9;
   res.forEach(r=>{if(r.found)return;const d=Math.hypot(mx-r.h.x/100*W,my-r.h.y/100*H);if(d<=r.h.r/100*W&&d<bd){bd=d;best=r}});
@@ -301,6 +303,7 @@ document.getElementById('submitBtn').onclick=async()=>{if(done)return;if(!player
 if(location.search.includes('edit=1'))photo.addEventListener('click',e=>{const p=getPhotoPosition(e.clientX,e.clientY);alert('x:'+p.x.toFixed(1)+'  y:'+p.y.toFixed(1))});
 
 // Start with the language selector visible every time the file is opened.
+if(typeof Store==='undefined'||typeof HUNT==='undefined')alert('Missing files: upload common.js, challenges.js and config.js to the same folder as hunt.html');
 setLanguage('en',false); languageModal.classList.remove('hidden');
 </script>
 </body>
